@@ -1,0 +1,43 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+boxes = [
+    {
+        :name => "node1",
+        :eth1 => "192.168.11.1",
+        :mem => "1024",
+        :cpu => "1",
+        :share => "shareNode1",
+        :prepare => "bootstrap.sh"
+    },
+    {
+        :name => "node2",
+        :eth1 => "192.168.11.2",
+        :mem => "1024",
+        :cpu => "1",
+        :share => "shareNode2",
+        :prepare => "bootstrap.sh"
+    }
+]
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "centos/7"
+
+  boxes.each do |opts|
+    config.vm.define opts[:name] do |config|
+      config.vm.hostname = opts[:name]
+      config.vm.provider "virtualbox" do |vb|
+        vb.memory = opts[:mem]
+        vb.cpus = opts[:cpu]
+      end
+    config.vm.network :private_network, ip: opts[:eth1]
+    config.vm.synced_folder opts[:share], "/home/vagrant/share", disable: false
+    config.vm.provision :shell, privileged:true, path: opts[:prepare]
+    end
+
+    ### Define the forwarded port
+    # config.vm.define "node1" do |config|
+    #   config.vm.network "forwarded_port", guest: 80, host:8081
+    # end
+  end
+end
